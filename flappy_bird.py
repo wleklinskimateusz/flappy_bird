@@ -16,6 +16,15 @@ def text_objects(text, font):
     textSurface = font.render(text, True, (0, 0, 0))
     return textSurface, textSurface.get_rect()
 
+class Player:
+    def __init__(self):
+        self.nick = ""
+        self.best_score = 0
+        self.games = 0
+
+    def get_data(self):
+        pass
+
 class Bird:
     IMGS = [
         load_file("bird1"),
@@ -177,6 +186,8 @@ class Game:
         self.pause = False
         self.run_loop = False
         self.menu = True
+        self.player = None
+        self.over = False
 
 
 
@@ -204,6 +215,11 @@ class Game:
         self.ge =[]
         self.birds = []
         self.menu = True
+        self.over = False
+
+        if self.player:
+            self.generation += 1
+            self.birds.append(Bird(230, 350))
 
         # gets neural network
         if genomes:
@@ -226,6 +242,11 @@ class Game:
 
         self.run_loop = True
 
+    def play(self):
+        self.player = Player()
+        self.run_loop = True
+        self.main()
+
     def check_events(self):
         for event in pygame.event.get():
 
@@ -242,15 +263,19 @@ class Game:
                         else:
                             self.pause = False
                             self.unpause()
+                    if self.player and not (self.over or self.menu):
+                        if event.key == pygame.K_SPACE:
+                            self.birds[0].jump()
 
     def check_for_colisions(self):
         for pipe in self.pipes:
             for x, bird in enumerate(self.birds):
                 if pipe.collide(bird):
-                    self.ge[x].fitness -= 1 # encourages birds not to hit the pipe
                     self.birds.pop(x)
-                    self.nets.pop(x)
-                    self.ge.pop(x)
+                    if not self.player:
+                        self.ge[x].fitness -= 1 # encourages birds not to hit the pipe
+                        self.nets.pop(x)
+                        self.ge.pop(x)
 
                 if not pipe.passed and pipe.x < bird.x:
                     pipe.passed = True
@@ -260,8 +285,9 @@ class Game:
         for x, bird in enumerate(self.birds):
             if bird.y + bird.img.get_height() >= 730 or bird.y < 0:
                 self.birds.pop(x)
-                self.nets.pop(x)
-                self.ge.pop(x)
+                if not self.player:
+                    self.nets.pop(x)
+                    self.ge.pop(x)
 
     def handle_pipe_moving(self):
         for pipe in self.pipes:
@@ -287,8 +313,9 @@ class Game:
     def handle_jumps(self):
         for x, bird in enumerate(self.birds):
             bird.move()
-            self.ge[x].fitness += 0.1
-            self.decide_for_jump(bird, x)
+            if not self.player:
+                self.ge[x].fitness += 0.1
+                self.decide_for_jump(bird, x)
 
     def draw_window(self):
         self.win.blit(self.BG_IMG, (0, 0))
@@ -410,16 +437,36 @@ class Game:
 
 
             self.button("let the AI play", 150, 450, 250, 50, (0, 250, 0), (0, 200, 0), self.run)
-            self.button("let me play", 150, 500, 200, 50, (100, 100, 250), (100, 100, 200), None)
+            self.button("let me play", 150, 500, 200, 50, (100, 100, 250), (100, 100, 200), self.play)
             self.button("Quit", 150, 550, 100, 50, (250, 0, 0), (200, 0, 0), self.end)
+
+            pygame.display.update()
+            self.clock.tick(15)
+
+    def game_over(self):
+        self.over = True
+
+        TextSurf, TextRect = text_objects("GAME OVER", self.LARGE_FONT)
+        TextRect.center = ((self.WIN_WIDTH/2),(self.WIN_HEIGHT/2))
+        self.win.blit(TextSurf, TextRect)
+
+        while self.over:
+            self.check_events()
+
+            #gameDisplay.fill(white)
+
+            self.button("Try Again",150,450,200,50,(0, 100, 255), (0, 100, 200),self.play)
+            self.button("Menu",150,500,200,50,(200, 200, 255), (100, 100, 150),self.intro)
+            self.button("Quit", 150,550,100,50, (255, 0, 0), (200, 0, 0), self.end)
 
             pygame.display.update()
             self.clock.tick(15)
 
 
 
-    def main(self, genome, config):
+    def main(self, genome=None, config=None):
         self.setup(genome)
+        self.menu = False
 
         while self.run_loop:
             self.clock.tick(30)
@@ -442,3 +489,5 @@ class Game:
 
 
             self.draw_window()
+        if self.player:
+            self.game_over()
