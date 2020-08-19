@@ -237,6 +237,9 @@ class Game:
         self.score = 0
         self.vel = 5
         self.win = pygame.display.set_mode((self.WIN_WIDTH, self.WIN_HEIGHT))
+        gameIcon = pygame.image.load('imgs/bird1.png')
+        pygame.display.set_icon(gameIcon)
+        pygame.display.set_caption('Flappy Bird')
         self.clock = pygame.time.Clock()
         self.last = 0
 
@@ -421,7 +424,7 @@ class Game:
 
         while self.menu:
             self.check_events()
-            self.win.fill((255, 255, 255))
+            self.win.blit(self.BG_IMG, (0, 0))
             # largeText = pygame.font.Font('freesansbold.tff', 115)
             TextSurf, TextRect = text_objects("Flappy Bird", self.LARGE_FONT)
             TextRect.center = (self.WIN_WIDTH/2, self.WIN_HEIGHT/2)
