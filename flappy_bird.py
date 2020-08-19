@@ -47,7 +47,7 @@ class Bird:
         displacement = self.vel*self.tick_count + 1.5*self.tick_count**2 # vertical displacement
 
         if displacement >= 16:
-            displacement = abs(displacement)/displacement * 16
+            displacement = 16
         if displacement < 0:
             displacement -= 2
 
@@ -174,6 +174,9 @@ class Game:
         self.vel = None
         self.generation = 0
         self.config = None
+        self.pause = False
+        self.run_loop = False
+        self.menu = True
 
 
 
@@ -200,10 +203,12 @@ class Game:
         self.nets =[]
         self.ge =[]
         self.birds = []
+        self.menu = True
 
         # gets neural network
         if genomes:
             self.generation += 1
+            self.menu = False
             for _, g in genomes:
                 net = neat.nn.FeedForwardNetwork.create(g, self.config)
                 self.nets.append(net)
@@ -221,12 +226,22 @@ class Game:
 
         self.run_loop = True
 
-    def check_if_closed(self):
+    def check_events(self):
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 self.run_loop = False
                 pygame.quit()
                 quit()
+            if event.type == pygame.KEYDOWN:
+                if not self.menu:
+                    if event.key == pygame.K_ESCAPE:
+                        if not self.pause:
+                            self.pause = True
+                            self.paused()
+                        else:
+                            self.pause = False
+                            self.unpause()
 
     def check_for_colisions(self):
         for pipe in self.pipes:
@@ -332,6 +347,27 @@ class Game:
         if output[0] > 0.5:
             bird.jump()
 
+    def unpause(self):
+        self.pause = False
+
+    def paused(self):
+        TextSurf, TextRect = text_objects("Paused", self.LARGE_FONT)
+        TextRect.center = ((self.WIN_WIDTH/2),(self.WIN_HEIGHT/2))
+        self.win.blit(TextSurf, TextRect)
+
+        while self.pause:
+            self.check_events()
+
+            #gameDisplay.fill(white)
+
+
+            self.button("Continue",150,450,200,50,(0, 100, 255), (0, 100, 200),self.unpause)
+            self.button("Menu",150,500,200,50,(200, 200, 255), (100, 100, 150),self.intro)
+            self.button("Quit", 150,550,100,50, (255, 0, 0), (200, 0, 0), self.end)
+
+            pygame.display.update()
+            self.clock.tick(15)
+
 
     def button(self, msg, x, y, w, h, ic, ac, action=None):
         mouse = pygame.mouse.get_pos()
@@ -353,10 +389,11 @@ class Game:
         quit()
 
     def intro(self):
+        self.menu = True
         self.setup()
 
-        while self.intro:
-            self.check_if_closed()
+        while self.menu:
+            self.check_events()
             self.win.fill((255, 255, 255))
             # largeText = pygame.font.Font('freesansbold.tff', 115)
             TextSurf, TextRect = text_objects("Flappy Bird", self.LARGE_FONT)
@@ -380,6 +417,7 @@ class Game:
             self.clock.tick(15)
 
 
+
     def main(self, genome, config):
         self.setup(genome)
 
@@ -388,7 +426,7 @@ class Game:
             self.add_pipe = False
             self.removed = []
 
-            self.check_if_closed()
+            self.check_events()
 
             self.handle_jumps()
 
