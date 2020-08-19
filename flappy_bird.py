@@ -12,6 +12,10 @@ def distance(x1, y1, x2, y2):
     d = ((x2-x1)**2 + (y2-y1)**2) ** 0.5
     return d
 
+def text_objects(text, font):
+    textSurface = font.render(text, True, (0, 0, 0))
+    return textSurface, textSurface.get_rect()
+
 class Bird:
     IMGS = [
         load_file("bird1"),
@@ -157,6 +161,7 @@ class Game:
     BG_IMG = load_file("bg")
 
     STAT_FONT = pygame.font.SysFont("comicsans", 50)
+    LARGE_FONT = pygame.font.SysFont("comicsans", 100)
 
     def __init__(self):
         self.nets =[]
@@ -172,11 +177,15 @@ class Game:
 
 
 
-    def run(self, config_file):
+    def run(self):
+
+        local_dir = os.path.dirname(__file__)
+        config_path = os.path.join(local_dir, "config-feedforward.txt")
+
         self.config = neat.config.Config(
                                 neat.DefaultGenome, neat.DefaultReproduction,
                                 neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                                config_file)
+                                config_path)
 
         p = neat.Population(self.config)
         p.add_reporter(neat.StdOutReporter(True))
@@ -186,34 +195,36 @@ class Game:
         self.winner = p.run(self.main,50)
 
 
-    def setup(self, genomes):
-        self.generation += 1
+    def setup(self, genomes=None):
+
         self.nets =[]
         self.ge =[]
         self.birds = []
 
         # gets neural network
-        for _, g in genomes:
-            net = neat.nn.FeedForwardNetwork.create(g, self.config)
-            self.nets.append(net)
-            self.birds.append(Bird(230, 350))
-            g.fitness = 0
-            self.ge.append(g)
+        if genomes:
+            self.generation += 1
+            for _, g in genomes:
+                net = neat.nn.FeedForwardNetwork.create(g, self.config)
+                self.nets.append(net)
+                self.birds.append(Bird(230, 350))
+                g.fitness = 0
+                self.ge.append(g)
 
-            self.base = Base(730)
-            self.pipes = [Pipe(600)]
-            self.score = 0
-            self.vel = 5
-            self.win = pygame.display.set_mode((self.WIN_WIDTH, self.WIN_HEIGHT))
-            self.clock = pygame.time.Clock()
-            self.last = 0
+        self.base = Base(730)
+        self.pipes = [Pipe(600)]
+        self.score = 0
+        self.vel = 5
+        self.win = pygame.display.set_mode((self.WIN_WIDTH, self.WIN_HEIGHT))
+        self.clock = pygame.time.Clock()
+        self.last = 0
 
-            self.run = True
+        self.run_loop = True
 
     def check_if_closed(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.run = False
+                self.run_loop = False
                 pygame.quit()
                 quit()
 
@@ -322,10 +333,57 @@ class Game:
             bird.jump()
 
 
+    def button(self, msg, x, y, w, h, ic, ac, action=None):
+        mouse = pygame.mouse.get_pos()
+        click = pygame.mouse.get_pressed()
+
+        if x+w > mouse[0] > x and y+h > mouse[1] > y:
+            pygame.draw.rect(self.win, ac,(x,y,w,h))
+            if click[0] == 1 and action != None:
+                action()
+
+        else:
+            pygame.draw.rect(self.win, ic,(x,y,w,h))
+        textSurf, textRect = text_objects(msg, self.STAT_FONT)
+        textRect.center = ( (x+(w/2)), (y+(h/2)) )
+        self.win.blit(textSurf, textRect)
+
+    def end(self):
+        pygame.quit()
+        quit()
+
+    def intro(self):
+        self.setup()
+
+        while self.intro:
+            self.check_if_closed()
+            self.win.fill((255, 255, 255))
+            # largeText = pygame.font.Font('freesansbold.tff', 115)
+            TextSurf, TextRect = text_objects("Flappy Bird", self.LARGE_FONT)
+            TextRect.center = (self.WIN_WIDTH/2, self.WIN_HEIGHT/2)
+            self.win.blit(TextSurf, TextRect)
+
+            mouse = pygame.mouse.get_pos()
+
+            if 150+100 > mouse[0] > 150 and 450+50 > mouse[1] > 450:
+                pygame.draw.rect(self.win, (0, 150, 0), (150, 450, 100, 50))
+            else:
+                pygame.draw.rect(self.win, (0, 255, 0), (150, 450, 100, 50))
+
+
+
+            self.button("let the AI play", 150, 450, 250, 50, (0, 250, 0), (0, 200, 0), self.run)
+            self.button("let me play", 150, 500, 200, 50, (100, 100, 250), (100, 100, 200), None)
+            self.button("Quit", 150, 550, 100, 50, (250, 0, 0), (200, 0, 0), self.end)
+
+            pygame.display.update()
+            self.clock.tick(15)
+
+
     def main(self, genome, config):
         self.setup(genome)
 
-        while self.run:
+        while self.run_loop:
             self.clock.tick(30)
             self.add_pipe = False
             self.removed = []
@@ -342,19 +400,7 @@ class Game:
 
             self.check_for_bird_death()
             if len(self.birds) == 0:
-                self.run = False
+                self.run_loop = False
 
 
             self.draw_window()
-
-
-
-if __name__ == "__main__":
-
-
-
-    local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "config-feedforward.txt")
-
-    MyGame = Game()
-    MyGame.run(config_path)
