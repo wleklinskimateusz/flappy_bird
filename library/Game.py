@@ -390,7 +390,7 @@ class Game:
             if self.player:
                 self.player.sum_score += 1
             else:
-                self.AI.sum_score += 1
+                self.AI.sum_score += len(self.birds)
             for g in self.ge:
                 g.fitness += 5
             self.pipes.append(Pipe(600))
