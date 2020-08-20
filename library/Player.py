@@ -33,3 +33,9 @@ class Player:
 
     def get_average_score(self):
         return self.sum_score / self.games
+
+    def reset(self):
+        self.best_score = 0
+        self.sum_score = 0
+        self.games = 0
+        self.save_data()

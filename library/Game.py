@@ -32,6 +32,7 @@ class Game:
         self.data_files = []
         self.AI = None
         self.initial_population = 0
+        self.board = False
 
 
 ### VIEWS ###
@@ -65,7 +66,8 @@ class Game:
 
             self.button("let the AI play", 150, 450, 250, 50, (0, 250, 0), (0, 200, 0), self.run)
             self.button("let me play", 150, 500, 200, 50, (100, 100, 250), (100, 100, 200), self.choose_player)
-            self.button("Quit", 150, 550, 100, 50, (250, 0, 0), (200, 0, 0), self.end)
+            self.button("leaderboard", 150, 550, 200, 50, (150, 200, 100), (200, 180, 200), self.leaderboard)
+            self.button("Quit", 150, 600, 100, 50, (250, 0, 0), (200, 0, 0), self.end)
 
             pygame.display.update()
             self.clock.tick(15)
@@ -75,9 +77,17 @@ class Game:
         Lets users choose their players
         """
         self.player_choosing = True
-
+        self.player = None
+        frame = 0
+        action = None
+        colors = []
+        for player in self.players:
+            color = [random.randint(100, 200), random.randint(100, 200), random.randint(100, 200)]
+            colors.append(color)
 
         while self.player_choosing:
+            frame += 1
+            self.clock.tick(30)
             self.check_events()
             self.win.blit(self.BG_IMG, (0, 0))
             # largeText = pygame.font.Font('freesansbold.tff', 115)
@@ -95,15 +105,40 @@ class Game:
 
 
             for i, player in enumerate(self.players):
+                if frame > 5:
+                    action = lambda: self.play(i)
                 if player.nick != "AI":
                     self.button(f"{player}",
                                 150, 450 + 50 * i, 250, 50,
-                                (20 * i, 40 + 10 * i, 50),
-                                (20 * i + 40, 10 * i, 50),
-                                lambda: self.play(i))
+                                (colors[i][0], colors[i][1], colors[i][2]),
+                                (colors[i][0]+50, colors[i][1]+50, colors[i][2]+50),
+                                action) #
 
             pygame.display.update()
-            self.clock.tick(15)
+
+    def leaderboard(self):
+        self.setup()
+        self.board = True
+
+        while self.board:
+            self.clock.tick(30)
+            self.check_events()
+            self.win.blit(self.BG_IMG, (0, 0))
+            # largeText = pygame.font.Font('freesansbold.tff', 115)
+            TextSurf, TextRect = text_objects("Leader Board", self.MID_FONT)
+            TextRect.center = (self.WIN_WIDTH/2, self.WIN_HEIGHT/4)
+            self.win.blit(TextSurf, TextRect)
+
+            for i, player in enumerate(self.sort_players()):
+                TextSurf, TextRect = text_objects(f"player: {player}, score: {player.sum_score}", self.STAT_FONT)
+                TextRect.center = (self.WIN_WIDTH/2, self.WIN_HEIGHT/4 + 100 +50 * i)
+                self.win.blit(TextSurf, TextRect)
+
+            self.button("Menu",150,500,200,50,(200, 200, 255), (100, 100, 150),self.intro)
+
+            pygame.display.update()
+
+
 
 
     def play(self, x):
@@ -119,6 +154,7 @@ class Game:
         for pl in self.players:
             if pl.nick == "AI":
                 self.AI = pl
+        self.AI.reset()
         """
         When AI plays
         """
@@ -162,7 +198,7 @@ class Game:
         Main Loop
         """
         self.setup(genome)
-        self.menu = False
+        self.run_loop = True
 
         while self.run_loop:
             self.clock.tick(30)
@@ -248,9 +284,11 @@ class Game:
         self.nets =[]
         self.ge =[]
         self.birds = []
-        self.menu = True
+        self.menu = False
         self.over = False
         self.player_choosing = False
+        self.board = False
+        self.run_loop = False
 
         if self.player:
             self.generation += 1
@@ -278,8 +316,6 @@ class Game:
         pygame.display.set_caption('Flappy Bird')
         self.clock = pygame.time.Clock()
         self.last = 0
-
-        self.run_loop = True
 
 
 
@@ -467,8 +503,27 @@ class Game:
         textRect.center = ( (x+(w/2)), (y+(h/2)) )
         self.win.blit(textSurf, textRect)
 
+
+### PLAYERS ###
+
     def create_player(self):
         pass
+
+    def sort_players(self):
+        players_sorted = []
+        scores = []
+        for player in self.players:
+            scores.append(player.sum_score)
+        scores.sort()
+        for score in scores:
+            for player in self.players:
+                if player.sum_score == score and player not in players_sorted:
+                    players_sorted.append(player)
+                    break
+        return reversed(players_sorted)
+
+
+
 
     def get_players(self):
 
