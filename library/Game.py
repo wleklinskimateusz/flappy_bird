@@ -117,6 +117,9 @@ class Game:
             pygame.display.update()
 
     def leaderboard(self):
+        """
+        A View to display players and theirs score
+        """
         self.setup()
         self.board = True
 
@@ -150,14 +153,15 @@ class Game:
         self.main()
 
     def run(self):
+        """
+        When AI plays the game
+        """
         self.generation = 0
         for pl in self.players:
             if pl.nick == "AI":
                 self.AI = pl
         self.AI.reset()
-        """
-        When AI plays
-        """
+
 
         local_dir = os.path.dirname(__file__)
         config_path = os.path.join(local_dir, "config-feedforward.txt")
