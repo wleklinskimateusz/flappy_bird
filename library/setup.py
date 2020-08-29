@@ -8,6 +8,9 @@ from library.Base import Base
 from library.Player import Player
 from library.Pipe import Pipe
 pygame.font.init()
+pygame.mixer.init()
+
+
 
 def load_file(name):
     return pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", name + ".png")))

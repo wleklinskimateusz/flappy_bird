@@ -10,6 +10,11 @@ class Game:
     MID_FONT = pygame.font.SysFont("comicsans", 75)
     LARGE_FONT = pygame.font.SysFont("comicsans", 100)
 
+    POINT = pygame.mixer.Sound('effects/point.wav')
+    DIE = pygame.mixer.Sound('effects/die.wav')
+    HIT = pygame.mixer.Sound("effects/hit.wav")
+    WING = pygame.mixer.Sound('effects/wing.wav')
+
     def __init__(self):
         self.nets =[]
         self.ge =[]
@@ -240,6 +245,7 @@ class Game:
         """
         Lost Game View
         """
+        self.DIE.play()
         self.player.games += 1
         if self.score > self.player.best_score:
             self.player.best_score = self.score
@@ -347,6 +353,7 @@ class Game:
                     if self.player and not (self.over or self.menu):
                         if event.key == pygame.K_SPACE:
                             self.birds[0].jump()
+                            self.WING.play()
 
     def check_for_colisions(self):
         """
@@ -356,6 +363,7 @@ class Game:
             for x, bird in enumerate(self.birds):
                 if pipe.collide(bird):
                     self.birds.pop(x)
+                    self.HIT.play()
                     if not self.player:
                         self.ge[x].fitness -= 1 # encourages birds not to hit the pipe
                         self.nets.pop(x)
@@ -393,8 +401,10 @@ class Game:
             self.score += 1
             if self.player:
                 self.player.sum_score += 1
+                self.POINT.play()
             else:
                 self.AI.sum_score += len(self.birds)
+                self.POINT.play()
             for g in self.ge:
                 g.fitness += 5
             self.pipes.append(Pipe(600))
