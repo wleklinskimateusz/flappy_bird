@@ -1,6 +1,6 @@
 # flappy_bird
 
-***I am proud of this project***
+***I am very proud of this project***
 
 Although the idea isn't mine.
 I learnt a lot
