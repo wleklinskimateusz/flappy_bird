@@ -1,9 +1,18 @@
 # flappy_bird
+Project which got me excited in game Dev and machine Learning
+It uses library neat-python to implement machine learning
 
-***I am very proud of this project***
+## Technologies
+* Python 3.8
+* PyGame 1.9.6
+* neat-python 0.92
 
-Although the idea isn't mine.
-I learnt a lot
+## Setup
+* clone directory
+* run `pip3 install -r requirements.txt` (If command will give an error, manually install pygame and neat-python using pip)
+* run `python3 flappy_bird.py`
 
-Basically I improved an Idea of: techwithtim: https://github.com/techwithtim/NEAT-Flappy-Bird
-and created a game based on his work.
+
+## Sources
+I followed the tutorial of: techwithtim: https://github.com/techwithtim/NEAT-Flappy-Bird
+and started to play with it.
